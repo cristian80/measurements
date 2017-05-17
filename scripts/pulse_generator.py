@@ -1,4 +1,9 @@
 
+'''
+Python interface for Pulse Streamer by Swabian Instruments
+Code: Cristian Bonato, c.bonato@hw.ac.uk
+'''
+
 import numpy as np 
 import pylab as plt
 
@@ -25,6 +30,10 @@ class PulseSequence ():
 		self.sequence_duration = 0
 
 	def add_dig_pulse (self, duration, channel):
+		'''
+		adds a pulse on one of the 8 digital channels (0..7)
+		Duration in ns
+		'''
 		if ((channel>0)&(channel<=7)):
 			self.sequence['D'+str(channel)].append ([1, duration])
 			self.seq_timers[channel] += duration
@@ -32,19 +41,58 @@ class PulseSequence ():
 			print ('Specified channel does not exist!')
 
 	def add_wait_pulse (self, duration, channel):
+		'''
+		adds wait time on one of the 8 digital channels (0..7)
+		Duration in ns
+		'''
  		if ((channel>0)&(channel<=7)):
 			self.sequence['D'+str(channel)].append ([0, duration])
 			self.seq_timers[channel] += duration
 		else:
 			print ('Specified channel does not exist!')
 
+	def add_digital_sequence (self, sequence, channel):
+		#sequence is a string separated by underscore ('_')
+		#P = pulse ('1'), W = wait time ('0')
+		#the integer after P, W is the duration in ns
+		#example: P100_W50_P100_W200
+
+ 		if ((channel>0)&(channel<=7)):
+ 			try:
+ 				str_list = sequence.split("_")
+ 				for i in str_list:
+ 					x = i[0]
+ 					duration = int(i[1:])
+ 					if (x=='P'):
+ 						value = 1
+ 					elif (x=='W'):
+ 						value = 0
+ 					else:
+ 						value = -1
+ 						print 'Unkown value: ', i
+
+ 					if (value>-1):
+ 						self.sequence['D'+str(channel)].append ([value, duration])
+ 						self.seq_timers[channel] += duration
+ 			except:
+ 				print 'Error in sequence encoding!'
+					
+		else:
+			print ('Specified channel does not exist!')
+
+
+
 	def select_active_channels (self):
+		'''
+		checks which channels have non-zero pulses
+		'''
 		max_t = max(self.seq_timers)
 		self.active_ch = np.nonzero(self.seq_timers)[0]
 
 		seq_active_ch = {}
 		for i in self.active_ch:
-			seq_active_ch ['D'+str(i)] = self.sequence ['D'+str(i)]
+			try: 
+				seq_active_ch ['D'+str(i)] = self.sequence ['D'+str(i)]
 			if self.seq_timers[i]<max_t:
 				self.add_wait_pulse (duration=max_t-self.seq_timers[i], channel = i)
 		
@@ -91,15 +139,39 @@ class PulseSequence ():
 	def generate_pulse_streamer_sequence (self):
 
 		self.pulse_streamer_seq = []
+		self.old_sequence = self.sequence.copy()
 		while (self.sequence_duration>0):
 			t, value = self.pop_out()
 			self.pulse_streamer_seq.append([t, value, hex(0), hex(0)])
+
+		self.sequence = self.old_sequence
 
 		print self.pulse_streamer_seq
 
 	def print_seq (self):
 		print 'Pulse Sequence:'
 		print self.sequence
+
+	def plot_digital_channels (self):
+
+		self.select_active_channels()
+		d = self.sequence_duration
+
+		plt.figure(figsize = (20, 6))
+		c = 0
+		for ch in self.active_ch:
+			y = np.zeros(d)
+			i = 0
+			for j in self.sequence['D'+str(ch)]:
+				y[i:i+int(j[1])] = int(j[0])*np.ones(int(j[1]))
+				i = i +j[1]
+
+			plt.plot (y+c*1.1*np.ones(len(y)), linewidth = 5)
+			c += 1
+		plt.show()
+				
+
+
 
 
 class PulseStreamer():
@@ -198,8 +270,18 @@ p.print_seq()
 p.add_dig_pulse (duration = 25, channel = 1)
 p.print_seq()
 
+#p.select_active_channels()
+#p.print_seq()
+#p.generate_pulse_streamer_sequence()
+
+p.add_digital_sequence (sequence = 'P30_W100_P50_W200_P100', channel=6)
 
 p.select_active_channels()
 p.print_seq()
 
 p.generate_pulse_streamer_sequence()
+print 'Do we still have a sequence??'
+p.print_seq()
+
+
+p.plot_digital_channels()
