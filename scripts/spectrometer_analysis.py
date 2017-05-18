@@ -4,6 +4,7 @@ import json
 
 from measurements.libs import SPE3read as spe3
 
+
 fName = 'D:/2017 May 16 16_55_44.spe'
 data = spe3.SPE3map(fName)
 
@@ -15,6 +16,3 @@ exposureTime = data.exposureTime  # exposure time in ms
 
 print wavelength
 print counts
-
-py.plot (wavelength, counts[1,:])
-plt.show()
