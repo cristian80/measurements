@@ -16,8 +16,5 @@ exposureTime = data.exposureTime  # exposure time in ms
 print wavelength
 print counts
 
-
-
-
 py.plot (wavelength, counts[1,:])
 plt.show()
