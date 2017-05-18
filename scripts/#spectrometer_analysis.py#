@@ -1,14 +1,12 @@
 import pylab as py
 import matplotlib.colors
 import json
+import numpy
 
 from measurements.libs import SPE3read as spe3
 
 
-#
-#
-
-fName = 'D:/2017 May 16 16_55_44.spe'
+fName = '/home/carlo/Scrivania/Heriot-Watt/measurements/data/2017 May 16 16_55_44.spe'
 data = spe3.SPE3map(fName)
 
 wavelength = data.wavelength
@@ -17,11 +15,13 @@ nbOfFrames = data.nbOfFrames
 counts = py.array([dataRow[0] for dataRow in data.data])
 exposureTime = data.exposureTime  # exposure time in ms
 
-print wavelength
-print counts
+print wavelength[0]
+print counts[0]
 
+print len(counts)
+i = 0
 
-
-
-
+#for i in range(0,len(counts)):
+py.figure(1)
+py.plot(wavelength, counts[i])
 
